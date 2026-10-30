@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Jogo da memória educacional sobre ação muscular e os músculos que realizam essa ação.">
+<title>💪 Jogo da Memória Muscular — Ação Muscular × Músculo</title>
+
+<style>
+/* =========================================================
+   VARIÁVEIS E RESET
+   ========================================================= */
+:root{
+  --roxo:#7c3aed;
+  --roxo-claro:#a78bfa;
+  --azul:#2563eb;
+  --azul-claro:#3b82f6;
+  --ciano:#06b6d4;
+  --verde:#10b981;
+  --verde-claro:#34d399;
+  --dourado:#fbbf24;
+  --rosa:#f472b6;
+
+  --texto:#eaeefb;
+  --texto-fraco:#9aa6c9;
+
+  --painel:rgba(20,24,55,.72);
+  --borda:rgba(124,58,237,.35);
+
+  --raio:16px;
+}
+
+*{ box-sizing:border-box; }
+
+html,body{ height:100%; }
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:'Segoe UI', Roboto, system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  color:var(--texto);
+  background:
+    radial-gradient(1200px 620px at 8% -10%, #2b1060 0%, transparent 60%),
+    radial-gradient(1000px 520px at 112% 6%, #06364d 0%, transparent 55%),
+    radial-gradient(900px 500px at 50% 120%, #1b1050 0%, transparent 60%),
+    linear-gradient(160deg, #0b0a1a, #0d1230 55%, #0a0f24);
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+button{ font-family:inherit; touch-action:manipulation; }
+
+.oculto{ display:none !important; }
+
+/* =========================================================
+   TELAS
+   ========================================================= */
+.screen{
+  display:none;
+  min-height:100vh;
+  padding:18px 14px 40px;
+}
+.screen.active{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+/* =========================================================
+   TELA INICIAL / FINAL
+   ========================================================= */
+.start-card{
+  width:100%;
+  max-width:660px;
+  margin:auto;
+  padding:30px 26px 26px;
+  border-radius:24px;
+  background:linear-gradient(165deg, rgba(38,28,86,.92), rgba(15,20,48,.92));
+  border:1px solid var(--borda);
+  box-shadow:0 30px 70px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07);
+  backdrop-filter:blur(14px);
+  text-align:center;
+  animation:entradaCard .6s cubic-bezier(.2,.8,.3,1) both;
+}
+
+@keyframes entradaCard{
+  from{ opacity:0; transform:translateY(24px) scale(.97); }
+  to{ opacity:1; transform:translateY(0) scale(1); }
+}
+
+.logo{
+  font-size:64px;
+  line-height:1;
+  margin-bottom:6px;
+  filter:drop-shadow(0 0 22px rgba(124,58,237,.85));
+  animation:flutuar 3s ease-in-out infinite;
+}
+@keyframes flutuar{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-9px); }
+}
+
+h1{
+  font-size:clamp(1.35rem, 4.2vw, 2rem);
+  margin:6px 0 6px;
+  font-weight:800;
+  letter-spacing:.4px;
+  background:linear-gradient(100deg, #a78bfa, #38bdf8 45%, #34d399 90%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  line-height:1.2;
+}
+
+.subtitulo{
+  color:var(--texto-fraco);
+  font-size:.94rem;
+  margin:0 0 20px;
+}
+.seta{ color:var(--ciano); font-weight:800; }
+
+.regras{
+  text-align:left;
+  background:rgba(255,255,255,.035);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;
+  padding:14px 18px 16px;
+  margin:0 0 22px;
+}
+.regras h2{
+  font-size:.78rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--roxo-claro);
+  margin:0 0 10px;
+}
+.regras ul{
+  margin:0;
+  padding-left:2px;
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.regras li{
+  font-size:.87rem;
+  line-height:1.45;
+  color:#c8d0ea;
+  padding-left:2px;
+}
+.regras b{ color:#fff; }
+.regras .tag-azul{ color:#60a5fa; }
+.regras .tag-verde{ color:#34d399; }
+
+.progresso-salvo{
+  margin-top:16px;
+  font-size:.82rem;
+  color:var(--texto-fraco);
+  line-height:1.6;
+}
+.progresso-salvo b{ color:var(--dourado); }
+.link-limpar{
+  display:inline-block;
+  margin-top:8px;
+  background:none;
+  border:none;
+  color:#7f8bb0;
+  font-size:.76rem;
+  text-decoration:underline;
+  cursor:pointer;
+  padding:4px;
+}
+.link-limpar:hover{ color:#c3cbe6; }
+
+/* =========================================================
+   BOTÕES
+   ========================================================= */
+.btn{
+  font:inherit;
+  font-weight:600;
+  font-size:.85rem;
+  cursor:pointer;
+  border-radius:13px;
+  padding:10px 18px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  color:var(--texto);
+  transition:transform .18s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.btn:hover{
+  background:rgba(124,58,237,.28);
+  border-color:rgba(167,139,250,.55);
+  transform:translateY(-2px);
+}
+.btn:active{ transform:translateY(0) scale(.98); }
+.btn:focus-visible{
+  outline:3px solid var(--ciano);
+  outline-offset:3px;
+}
+
+.btn-primario{
+  display:block;
+  width:100%;
+  border:none;
+  padding:15px 26px;
+  font-size:1.02rem;
+  font-weight:800;
+  letter-spacing:.3px;
+  color:#fff;
+  background:linear-gradient(135deg, var(--roxo), var(--azul) 60%, var(--ciano));
+  background-size:180% 180%;
+  box-shadow:0 12px 34px rgba(124,58,237,.48);
+  animation:brilhoBotao 5s ease infinite;
+}
+@keyframes brilhoBotao{
+  0%,100%{ background-position:0% 50%; }
+  50%{ background-position:100% 50%; }
+}
+.btn-primario:hover{
+  transform:translateY(-3px);
+  box-shadow:0 18px 42px rgba(124,58,237,.66);
+}
+.btn-secundario{
+  display:block;
+  width:100%;
+  margin-top:10px;
+  background:rgba(6,182,212,.14);
+  border-color:rgba(6,182,212,.4);
+  color:#a5f3fc;
+}
+.btn-secundario:hover{
+  background:rgba(6,182,212,.28);
+  border-color:rgba(6,182,212,.7);
+}
+
+/* =========================================================
+   HUD DO JOGO
+   ========================================================= */
+#screen-game{ padding-top:14px; }
+
+.game-wrap{
+  width:100%;
+  max-width:980px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.hud{
+  width:100%;
+  padding:12px 14px;
+  border-radius:18px;
+  background:linear-gradient(160deg, rgba(35,26,80,.8), rgba(14,18,44,.85));
+  border:1px solid var(--borda);
+  box-shadow:0 14px 34px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.hud-topo{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.hud-titulo{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  font-weight:800;
+  font-size:.95rem;
+  letter-spacing:.3px;
+  color:#fff;
+}
+.hud-titulo .bolinha{
+  width:11px;height:11px;border-radius:50%;
+  background:var(--ciano);
+  box-shadow:0 0 12px var(--ciano);
+  animation:piscar 1.6s ease-in-out infinite;
+}
+@keyframes piscar{
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%{ opacity:.45; transform:scale(.8); }
+}
+
+.stats{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+}
+.stat{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:1px;
+  min-width:70px;
+  padding:6px 11px;
+  border-radius:12px;
+  background:rgba(124,58,237,.13);
+  border:1px solid rgba(124,58,237,.28);
+  transition:transform .2s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.stat.destaque{
+  animation:popStat .45s ease;
+  border-color:rgba(251,191,36,.75);
+  box-shadow:0 0 18px rgba(251,191,36,.45);
+}
+@keyframes popStat{
+  0%{ transform:scale(1); }
+  45%{ transform:scale(1.13); }
+  100%{ transform:scale(1); }
+}
+.stat-label{
+  font-size:.58rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--texto-fraco);
+  font-weight:700;
+}
+.stat-valor{
+  font-size:1rem;
+  font-weight:800;
+  color:#fff;
+  font-variant-numeric:tabular-nums;
+}
+.stat-valor.pontos{ color:var(--dourado); }
+.stat-valor.tempo{ color:#67e8f9; }
+
+/* Barra de progresso */
+.progresso-linha{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.barra{
+  flex:1;
+  height:12px;
+  border-radius:99px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.08);
+  overflow:hidden;
+}
+.barra-fill{
+  height:100%;
+  width:0%;
+  border-radius:99px;
+  background:linear-gradient(90deg, var(--azul), var(--ciano) 55%, var(--verde));
+  box-shadow:0 0 16px rgba(6,182,212,.7);
+  transition:width .45s cubic-bezier(.2,.8,.3,1);
+}
+.barra-texto{
+  font-size:.76rem;
+  font-weight:800;
+  color:var(--ciano);
+  min-width:42px;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+
+/* Controles */
+.controles{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+}
+.controles .btn{ font-size:.8rem; padding:9px 15px; }
+
+/* =========================================================
+   GRID DE CARTAS
+   ========================================================= */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(var(--cols, 4), minmax(0, 1fr));
+  gap:clamp(6px, 1.1vw, 12px);
+  width:100%;
+  align-content:start;
+  perspective:1400px;
+}
+
+/* ---------- CARTA ---------- */
+.card{
+  position:relative;
+  aspect-ratio:4 / 5;
+  padding:0;
+  border:none;
+  background:transparent;
+  border-radius:14px;
+  cursor:pointer;
+  perspective:900px;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .22s ease, filter .22s ease;
+  animation:entradaCarta .45s cubic-bezier(.2,.8,.3,1) both;
+}
+
+@keyframes entradaCarta{
+  from{ opacity:0; transform:translateY(18px) scale(.9) rotateX(-25deg); }
+  to{ opacity:1; transform:translateY(0) scale(1) rotateX(0); }
+}
+
+.card:hover:not(.flipped):not(.matched){
+  transform:translateY(-5px) scale(1.02);
+  filter:brightness(1.12);
+}
+.card:focus-visible{
+  outline:3px solid var(--ciano);
+  outline-offset:3px;
+}
+
+.card-inner{
+  position:relative;
+  width:100%;
+  height:100%;
+  transform-style:preserve-3d;
+  transition:transform .55s cubic-bezier(.25,.75,.3,1.15);
+  border-radius:14px;
+}
+
+.card.flipped .card-inner,
+.card.matched .card-inner{
+  transform:rotateY(180deg);
+}
+
+.face{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  padding:7px;
+  border-radius:14px;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  overflow:hidden;
+  text-align:center;
+}
+
+/* ---------- VERSO ---------- */
+.verso{
+  background:linear-gradient(150deg, #211a52, #312e81 48%, #4c1d95);
+  border:2px solid rgba(124,58,237,.55);
+  box-shadow:0 8px 22px rgba(0,0,0,.5), inset 0 0 26px rgba(124,58,237,.35);
+}
+.verso::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:repeating-linear-gradient(45deg, rgba(255,255,255,.045) 0 6px, transparent 6px 13px);
+  border-radius:12px;
+}
+.verso::after{
+  content:'';
+  position:absolute;
+  inset:7px;
+  border:1px dashed rgba(167,139,250,.32);
+  border-radius:9px;
+}
+.verso-icone{
+  position:relative;
+  z-index:2;
+  font-size:clamp(17px, 2.6vw, 30px);
+  filter:drop-shadow(0 0 10px rgba(167,139,250,.95));
+}
+.verso-letra{
+  position:relative;
+  z-index:2;
+  font-size:.55rem;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:rgba(196,181,253,.62);
+  font-weight:800;
+}
+
+/* ---------- FRENTE ---------- */
+.frente{
+  transform:rotateY(180deg);
+  border:2px solid rgba(255,255,255,.18);
+  box-shadow:0 8px 22px rgba(0,0,0,.45);
+  gap:6px;
+}
+
+.frente.acao{
+  background:linear-gradient(155deg, #1e3a8a, #2563eb 48%, #3b82f6);
+  box-shadow:0 8px 22px rgba(0,0,0,.45), inset 0 0 30px rgba(59,130,246,.5);
+}
+.frente.musculo{
+  background:linear-gradient(155deg, #065f46, #10b981 48%, #34d399);
+  box-shadow:0 8px 22px rgba(0,0,0,.45), inset 0 0 30px rgba(52,211,153,.45);
+}
+
+.frente-emoji{
+  font-size:clamp(15px, 2.3vw, 26px);
+  line-height:1;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.45));
+}
+.frente-texto{
+  font-size:clamp(8px, 1.35vw, 12.5px);
+  font-weight:700;
+  line-height:1.22;
+  color:#fff;
+  text-shadow:0 1px 3px rgba(0,0,0,.55);
+  display:-webkit-box;
+  -webkit-line-clamp:5;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  word-break:break-word;
+  hyphens:auto;
+}
+.frente-tipo{
+  font-size:.5rem;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  font-weight:900;
+  opacity:.78;
+  color:#fff;
+  order:-1;
+}
+
+/* ---------- CARTA ENCONTRADA ---------- */
+.card.matched{
+  animation:pulsoPar .75s ease-out;
+  cursor:default;
+}
+@keyframes pulsoPar{
+  0%{ box-shadow:0 0 0 0 rgba(251,191,36,.9); }
+  100%{ box-shadow:0 0 0 18px rgba(251,191,36,0); }
+}
+.card.matched .frente{
+  border-color:rgba(251,191,36,.9);
+  box-shadow:0 0 0 2px rgba(251,191,36,.75), 0 0 26px rgba(251,191,36,.55), inset 0 0 26px rgba(251,191,36,.22);
+}
+.card.matched::after{
+  content:'✓';
+  position:absolute;
+  top:3px;
+  right:7px;
+  z-index:5;
+  font-size:.85rem;
+  font-weight:900;
+  color:var(--dourado);
+  text-shadow:0 0 10px rgba(251,191,36,.95);
+}
+
+/* ---------- CARTA ERRADA (tremor) ---------- */
+.card.errada .card-inner{
+  animation:tremor .42s ease;
+}
+@keyframes tremor{
+  0%,100%{ transform:rotateY(180deg) translateX(0); }
+  20%{ transform:rotateY(180deg) translateX(-7px); }
+  40%{ transform:rotateY(180deg) translateX(7px); }
+  60%{ transform:rotateY(180deg) translateX(-5px); }
+  80%{ transform:rotateY(180deg) translateX(5px); }
+}
+
+/* =========================================================
+   BANNER DE REVISÃO
+   ========================================================= */
+.revisao-banner{
+  position:fixed;
+  top:14px;
+  left:50%;
+  transform:translateX(-50%) translateY(-140%);
+  z-index:70;
+  padding:12px 26px;
+  border-radius:99px;
+  background:linear-gradient(135deg, rgba(124,58,237,.96), rgba(6,182,212,.96));
+  color:#fff;
+  font-weight:800;
+  font-size:.9rem;
+  letter-spacing:.4px;
+  box-shadow:0 14px 38px rgba(0,0,0,.6);
+  transition:transform .4s cubic-bezier(.2,.8,.3,1.2);
+  white-space:nowrap;
+  pointer-events:none;
+}
+.revisao-banner.show{ transform:translateX(-50%) translateY(0); }
+.revisao-banner b{ color:#fde68a; font-size:1.15rem; }
+
+/* =========================================================
+   OVERLAY "NÍVEL CONCLUÍDO"
+   ========================================================= */
+.overlay{
+  position:fixed;
+  inset:0;
+  z-index:80;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(6,8,22,.8);
+  backdrop-filter:blur(7px);
+  animation:fadeIn .3s ease both;
+}
+@keyframes fadeIn{ from{ opacity:0; } to{ opacity:1; } }
+
+.overlay-card{
+  width:100%;
+  max-width:440px;
+  padding:28px 24px 22px;
+  border-radius:24px;
+  text-align:center;
+  background:linear-gradient(165deg, rgba(45,32,100,.97), rgba(13,18,46,.98));
+  border:1px solid rgba(167,139,250,.45);
+  box-shadow:0 30px 80px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.09);
+  animation:entradaCard .5s cubic-bezier(.2,.8,.3,1.2) both;
+}
+.overlay-emoji{
+  font-size:56px;
+  line-height:1;
+  margin-bottom:4px;
+  animation:flutuar 2.2s ease-in-out infinite;
+}
+.overlay-card h2{
+  margin:4px 0 4px;
+  font-size:1.5rem;
+  background:linear-gradient(100deg,#a78bfa,#38bdf8,#34d399);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  font-weight:900;
+}
+.overlay-nivel-nome{
+  margin:0 0 18px;
+  color:var(--texto-fraco);
+  font-size:.86rem;
+  font-weight:600;
+  letter-spacing:.05em;
+}
+.overlay-stats{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:8px;
+  margin-bottom:20px;
+}
+.overlay-stats > div{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  padding:10px 4px;
+  border-radius:12px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.09);
+}
+.overlay-stats span{
+  font-size:1rem;
+  font-weight:900;
+  color:#fff;
+  font-variant-numeric:tabular-nums;
+}
+.overlay-stats small{
+  font-size:.56rem;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  color:var(--texto-fraco);
+  font-weight:700;
+}
+#ov-bonus{ color:var(--dourado); }
+.overlay-contagem{
+  margin:12px 0 0;
+  font-size:.78rem;
+  color:var(--texto-fraco);
+  min-height:1em;
+  font-variant-numeric:tabular-nums;
+}
+
+/* =========================================================
+   TELA FINAL
+   ========================================================= */
+.resumo-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:10px;
+  margin:6px 0 22px;
+}
+.resumo-item{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  padding:16px 10px;
+  border-radius:16px;
+  background:linear-gradient(160deg, rgba(124,58,237,.18), rgba(6,182,212,.1));
+  border:1px solid rgba(124,58,237,.32);
+}
+.resumo-item span{
+  font-size:1.42rem;
+  font-weight:900;
+  color:#fff;
+  font-variant-numeric:tabular-nums;
+  line-height:1.1;
+}
+.resumo-item small{
+  font-size:.62rem;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+  color:var(--texto-fraco);
+  font-weight:700;
+}
+.resumo-item.destaque span{ color:var(--dourado); }
+
+.recorde{
+  padding:10px 16px;
+  margin-bottom:16px;
+  border-radius:12px;
+  background:rgba(251,191,36,.14);
+  border:1px solid rgba(251,191,36,.5);
+  color:var(--dourado);
+  font-weight:800;
+  font-size:.86rem;
+  animation:popStat .7s ease;
+}
+
+#screen-end .btn{ margin-top:10px; }
+#screen-end .btn-primario{ margin-top:0; }
+
+/* =========================================================
+   CANVAS DE CONFETE
+   ========================================================= */
+#confete{
+  position:fixed;
+  inset:0;
+  z-index:90;
+  pointer-events:none;
+}
+
+/* =========================================================
+   RESPONSIVIDADE
+   ========================================================= */
+@media (max-width:760px){
+  .screen{ padding:12px 10px 30px; }
+  .hud{ padding:10px; gap:8px; }
+  .stats{ gap:6px; }
+  .stat{ min-width:60px; padding:5px 8px; }
+  .stat-valor{ font-size:.9rem; }
+  .stat-label{ font-size:.53rem; }
+  .hud-titulo{ font-size:.84rem; }
+  .overlay-stats{ grid-template-columns:repeat(2, 1fr); }
+  .frente-tipo{ display:none; }
+  .regras ul{ gap:6px; }
+  .regras li{ font-size:.82rem; }
+}
+
+@media (max-width:420px){
+  .start-card{ padding:22px 16px 20px; border-radius:20px; }
+  .logo{ font-size:52px; }
+  .controles .btn{ font-size:.74rem; padding:8px 11px; }
+  .resumo-item span{ font-size:1.15rem; }
+  .stat{ min-width:54px; padding:4px 6px; }
+  .stat-valor{ font-size:.82rem; }
+}
+
+/* Acessibilidade: respeitar preferência por menos movimento */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.08s !important;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- Canvas usado para o confete da vitória -->
+<canvas id="confete" aria-hidden="true"></canvas>
+
+<!-- =========================================================
+     TELA 1 — INICIAL
+     ========================================================= -->
+<section id="screen-start" class="screen active" aria-labelledby="titulo-jogo">
+  <div class="start-card">
+    <div class="logo" aria-hidden="true">💪</div>
+    <h1 id="titulo-jogo">Jogo da Memória Muscular</h1>
+    <p class="subtitulo">Ação muscular <span class="seta">↔</span> Músculo que realiza a ação</p>
+
+    <div class="regras">
+      <h2>Como jogar</h2>
+      <ul>
+        <li>🔵 Cartas <b class="tag-azul">azuis</b> mostram uma <b>ação muscular</b>.</li>
+        <li>🟢 Cartas <b class="tag-verde">verdes</b> mostram o <b>músculo</b> responsável.</li>
+        <li>🎯 Vire duas cartas por vez e encontre o par correto.</li>
+        <li>⭐ <b>+100</b> pontos por acerto &nbsp;•&nbsp; <b>−10</b> pontos por erro.</li>
+        <li>⏱️ Bônus de tempo ao concluir cada nível.</li>
+        <li>🧠 4 níveis: Fácil → Médio → Difícil → Mestre.</li>
+      </ul>
+    </div>
+
+    <button id="btn-comecar" class="btn btn-primario">▶ Começar Jogo</button>
+    <button id="btn-continuar" class="btn btn-secundario oculto">⏩ Continuar de onde parei</button>
+
+    <div class="progresso-salvo" id="progresso-salvo"></div>
+  </div>
+</section>
+
+<!-- =========================================================
+     TELA 2 — JOGO
+     ========================================================= -->
+<section id="screen-game" class="screen" aria-label="Tabuleiro do jogo da memória">
+  <div class="game-wrap">
+
+    <!-- HUD -->
+    <header class="hud">
+      <div class="hud-topo">
+        <div class="hud-titulo">
+          <span class="bolinha" aria-hidden="true"></span>
+          <span id="hud-nivel">Nível 1 • Fácil</span>
+        </div>
+        <div class="stats" role="status" aria-live="polite">
+          <div class="stat" id="stat-tentativas">
+            <span class="stat-label">Tentativas</span>
+            <span class="stat-valor" id="hud-tentativas">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Pares</span>
+            <span class="stat-valor" id="hud-pares">0/6</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Tempo</span>
+            <span class="stat-valor tempo" id="hud-tempo">00:00</span>
+          </div>
+          <div class="stat" id="stat-pontos">
+            <span class="stat-label">Pontos</span>
+            <span class="stat-valor pontos" id="hud-pontos">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="progresso-linha">
+        <div class="barra" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+             aria-valuenow="0" id="barra" aria-label="Progresso de pares encontrados">
+          <div class="barra-fill" id="barra-fill"></div>
+        </div>
+        <span class="barra-texto" id="barra-texto">0%</span>
+      </div>
+    </header>
+
+    <!-- Controles -->
+    <div class="controles">
+      <button id="btn-reiniciar" class="btn">🔄 Reiniciar nível</button>
+      <button id="btn-revisao" class="btn">👁️ Modo Revisão</button>
+      <button id="btn-inicio" class="btn">🏠 Voltar ao início</button>
+    </div>
+
+    <!-- Grid de cartas -->
+    <div class="grid" id="grid"></div>
+
+  </div>
+</section>
+
+<!-- =========================================================
+     TELA 3 — FINAL
+     ========================================================= -->
+<section id="screen-end" class="screen" aria-labelledby="titulo-fim">
+  <div class="start-card">
+    <div class="logo" aria-hidden="true">🏆</div>
+    <h1 id="titulo-fim">MESTRE DA ANATOMIA MUSCULAR!</h1>
+    <p class="subtitulo">Você concluiu todos os 4 níveis. Parabéns!</p>
+
+    <div class="resumo-grid">
+      <div class="resumo-item">
+        <span id="fim-tempo">00:00</span>
+        <small>Tempo total</small>
+      </div>
+      <div class="resumo-item">
+        <span id="fim-jogadas">0</span>
+        <small>Jogadas</small>
+      </div>
+      <div class="resumo-item destaque">
+        <span id="fim-pontos">0</span>
+        <small>Pontuação</small>
+      </div>
+      <div class="resumo-item">
+        <span id="fim-acertos">0%</span>
+        <small>Acertos</small>
+      </div>
+    </div>
+
+    <div id="fim-recorde" class="recorde oculto">🎖️ Novo recorde pessoal!</div>
+
+    <button id="btn-jogar-novamente" class="btn btn-primario">🔄 Jogar Novamente</button>
+    <button id="btn-inicio-fim" class="btn">🏠 Voltar ao início</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     OVERLAY — NÍVEL CONCLUÍDO
+     ========================================================= -->
+<div id="overlay-nivel" class="overlay oculto" role="dialog" aria-modal="true" aria-labelledby="ov-titulo">
+  <div class="overlay-card">
+    <div class="overlay-emoji" aria-hidden="true">🎉</div>
+    <h2 id="ov-titulo">Nível Concluído!</h2>
+    <p class="overlay-nivel-nome" id="ov-nome">Nível 1 • Fácil</p>
+
+    <div class="overlay-stats">
+      <div><span id="ov-tempo">00:00</span><small>Tempo</small></div>
+      <div><span id="ov-tentativas">0</span><small>Tentativas</small></div>
+      <div><span id="ov-bonus">+0</span><small>Bônus</small></div>
+      <div><span id="ov-pontos">0</span><small>Pontos</small></div>
+    </div>
+
+    <button id="btn-proximo" class="btn btn-primario">Próximo Nível ➡️</button>
+    <p class="overlay-contagem" id="overlay-contagem"></p>
+  </div>
+</div>
+
+<!-- =========================================================
+     BANNER DE REVISÃO
+     ========================================================= -->
+<div id="revisao-banner" class="revisao-banner" aria-live="polite">
+  👁️ Memorize os pares! <b id="revisao-contagem">3</b>
+</div>
+
+<script>
+/* =========================================================================
+   JOGO DA MEMÓRIA MUSCULAR
+   Ação muscular × Músculo responsável
+   -------------------------------------------------------------------------
+   Estrutura:
+     1. Dados dos níveis
+     2. Estado do jogo
+     3. Áudio (Web Audio API)
+     4. Persistência (localStorage)
+     5. Utilidades
+     6. Renderização
+     7. Lógica do jogo
+     8. Navegação entre telas / níveis
+     9. Confete
+    10. Inicialização
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  /* =======================================================================
+     1. DADOS DOS NÍVEIS
+     Cada item = { acao, musculo, emoji }
+     O emoji é usado na carta de AÇÃO. A carta de MÚSCULO usa 💪 (padrão).
+     ======================================================================= */
+  const LEVELS = [
+    /* ------------------------- NÍVEL 1 — FÁCIL ------------------------- */
+    {
+      nome: 'Fácil',
+      limite: 60, // segundos de referência para o bônus de tempo
+      pares: [
+        { acao: 'Flexão de cotovelo',   musculo: 'Bíceps braquial',              emoji: '💪' },
+        { acao: 'Extensão de joelho',   musculo: 'Quadríceps femoral',           emoji: '🦵' },
+        { acao: 'Flexão de joelho',     musculo: 'Isquiotibiais (bíceps femoral)', emoji: '🦿' },
+        { acao: 'Extensão de quadril',  musculo: 'Glúteo máximo',                emoji: '🍑' },
+        { acao: 'Adução de coxa',       musculo: 'Adutores da coxa',             emoji: '🧲' },
+        { acao: 'Elevação dos ombros',  musculo: 'Trapézio (porção superior)',   emoji: '🤷' }
+      ]
+    },
+
+    /* ------------------------- NÍVEL 2 — MÉDIO ------------------------- */
+    {
+      nome: 'Médio',
+      limite: 90,
+      pares: [
+        { acao: 'Abdução do braço',            musculo: 'Deltoide médio',                          emoji: '🙆' },
+        { acao: 'Flexão do quadril',           musculo: 'Psoas maior / Iliopsoas',                 emoji: '🚶' },
+        { acao: 'Extensão do cotovelo',        musculo: 'Tríceps braquial',                        emoji: '🦾' },
+        { acao: 'Rotação medial do braço',     musculo: 'Subescapular',                            emoji: '🔄' },
+        { acao: 'Flexão plantar do tornozelo', musculo: 'Tríceps sural (gastrocnêmio + sóleo)',    emoji: '🦶' },
+        { acao: 'Dorsiflexão do tornozelo',    musculo: 'Tibial anterior',                         emoji: '⬆️' },
+        { acao: 'Retração escapular',          musculo: 'Romboides',                               emoji: '🔙' },
+        { acao: 'Flexão de tronco',            musculo: 'Reto abdominal',                          emoji: '🙇' }
+      ]
+    },
+
+    /* ------------------------ NÍVEL 3 — DIFÍCIL ------------------------ */
+    {
+      nome: 'Difícil',
+      limite: 120,
+      pares: [
+        { acao: 'Abdução do quadril',        musculo: 'Glúteo médio',                                emoji: '↔️' },
+        { acao: 'Adução do braço',           musculo: 'Peitoral maior (porção inferior)',            emoji: '⬅️' },
+        { acao: 'Rotação lateral do braço',  musculo: 'Infraespinhal',                               emoji: '🔄' },
+        { acao: 'Extensão do punho',         musculo: 'Extensores do carpo (extensor radial do carpo)', emoji: '🖐️' },
+        { acao: 'Flexão do punho',           musculo: 'Flexor radial do carpo',                      emoji: '✊' },
+        { acao: 'Elevação da escápula',      musculo: 'Elevador da escápula',                        emoji: '⬆️' },
+        { acao: 'Protração da escápula',     musculo: 'Serrátil anterior',                           emoji: '➡️' },
+        { acao: 'Extensão do tronco',        musculo: 'Eretores da espinha',                         emoji: '🧍' },
+        { acao: 'Inversão do pé',            musculo: 'Tibial posterior',                            emoji: '🦶' },
+        { acao: 'Eversão do pé',             musculo: 'Fibular longo',                               emoji: '👟' }
+      ]
+    },
+
+    /* --------------------- NÍVEL 4 — MUITO DIFÍCIL --------------------- */
+    {
+      nome: 'Mestre',
+      limite: 150,
+      pares: [
+        { acao: 'Flexão da coluna cervical',   musculo: 'Esternocleidomastoideo',                    emoji: '🙇' },
+        { acao: 'Extensão da coluna cervical', musculo: 'Esplênio do pescoço',                       emoji: '🙆' },
+        { acao: 'Rotação da cabeça',           musculo: 'Esternocleidomastoideo (contralateral)',    emoji: '🔄' },
+        { acao: 'Flexão das falanges',         musculo: 'Flexor profundo dos dedos',                 emoji: '✊' },
+        { acao: 'Extensão das falanges',       musculo: 'Extensor comum dos dedos',                  emoji: '🖐️' },
+        { acao: 'Oposição do polegar',         musculo: 'Oponente do polegar',                       emoji: '👍' },
+        { acao: 'Rotação medial do fêmur',     musculo: 'Tensor da fáscia lata',                     emoji: '🦵' },
+        { acao: 'Rotação lateral do fêmur',    musculo: 'Piriforme',                                 emoji: '🩰' },
+        { acao: 'Flexão da coluna lombar',     musculo: 'Reto abdominal + oblíquos',                 emoji: '🧘' },
+        { acao: 'Inspiração forçada',          musculo: 'Diafragma',                                 emoji: '🫁' },
+        { acao: 'Expiração forçada',           musculo: 'Reto abdominal + oblíquos internos',        emoji: '😮‍💨' },
+        { acao: 'Mastigação',                  musculo: 'Masseter',                                  emoji: '🦷' }
+      ]
+    }
+  ];
+
+  /* =======================================================================
+     2. ESTADO DO JOGO
+     ======================================================================= */
+  const estado = {
+    nivel: 0,
+    baralho: [],           // cartas do nível atual
+    primeira: null,        // elemento da 1ª carta virada
+    segunda: null,         // elemento da 2ª carta virada
+    bloqueado: false,      // impede cliques durante verificação
+    emRevisao: false,      // modo revisão ativo
+
+    tentativas: 0,         // tentativas do nível atual
+    pares: 0,              // pares encontrados no nível atual
+    acertosTotais: 0,      // pares corretos no jogo inteiro
+    jogadasTotais: 0,      // tentativas no jogo inteiro
+    pontos: 0,             // pontuação global
+    pontosBaseNivel: 0,    // pontuação no início do nível (para reinício justo)
+
+    tempoNivel: 0,         // segundos do nível
+    tempoTotal: 0,         // segundos do jogo inteiro
+    timerId: null
+  };
+
+  // Elementos DOM reutilizados
+  const el = {
+    telas: {
+      inicio: document.getElementById('screen-start'),
+      jogo: document.getElementById('screen-game'),
+      fim: document.getElementById('screen-end')
+    },
+    grid: document.getElementById('grid'),
+    hudNivel: document.getElementById('hud-nivel'),
+    hudTentativas: document.getElementById('hud-tentativas'),
+    hudPares: document.getElementById('hud-pares'),
+    hudTempo: document.getElementById('hud-tempo'),
+    hudPontos: document.getElementById('hud-pontos'),
+    statPontos: document.getElementById('stat-pontos'),
+    barraFill: document.getElementById('barra-fill'),
+    barra: document.getElementById('barra'),
+    barraTexto: document.getElementById('barra-texto'),
+    overlayNivel: document.getElementById('overlay-nivel'),
+    ovNome: document.getElementById('ov-nome'),
+    ovTempo: document.getElementById('ov-tempo'),
+    ovTentativas: document.getElementById('ov-tentativas'),
+    ovBonus: document.getElementById('ov-bonus'),
+    ovPontos: document.getElementById('ov-pontos'),
+    ovContagem: document.getElementById('overlay-contagem'),
+    btnProximo: document.getElementById('btn-proximo'),
+    bannerRevisao: document.getElementById('revisao-banner'),
+    revisaoContagem: document.getElementById('revisao-contagem'),
+    progressoSalvo: document.getElementById('progresso-salvo'),
+    btnContinuar: document.getElementById('btn-continuar')
+  };
+
+  let intervaloOverlay = null; // contagem regressiva do overlay de nível
+
+  /* =======================================================================
+     3. ÁUDIO — Web Audio API (sem arquivos externos)
+     ======================================================================= */
+  let ctxAudio = null;
+
+  /** Cria/retoma o contexto de áudio (precisa de gesto do usuário). */
+  function obterAudio() {
+    try {
+      if (!ctxAudio) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctxAudio = new AC();
+      }
+      if (ctxAudio.state === 'suspended') {
+        ctxAudio.resume();
+      }
+      return ctxAudio;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * Toca um bipe simples.
+   * @param {number} freq  frequência em Hz
+   * @param {number} dur   duração em segundos
+   * @param {string} tipo  waveform ('sine'|'square'|'triangle'|'sawtooth')
+   * @param {number} vol   volume (0..1)
+   * @param {number} atraso atraso em segundos
+   */
+  function bipe(freq, dur, tipo, vol, atraso) {
+    const ac = obterAudio();
+    if (!ac) return;
+    tipo = tipo || 'sine';
+    vol = (vol === undefined) ? 0.12 : vol;
+    atraso = atraso || 0;
+
+    const t0 = ac.currentTime + atraso;
+    const osc = ac.createOscillator();
+    const ganho = ac.createGain();
+
+    osc.type = tipo;
+    osc.frequency.setValueAtTime(freq, t0);
+
+    ganho.gain.setValueAtTime(0.0001, t0);
+    ganho.gain.linearRampToValueAtTime(vol, t0 + 0.012);
+    ganho.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+    osc.connect(ganho);
+    ganho.connect(ac.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.03);
+  }
+
+  const som = {
+    clique() { bipe(520, 0.06, 'sine', 0.06); },
+    acerto() {
+      bipe(660, 0.11, 'sine', 0.14, 0);
+      bipe(880, 0.16, 'sine', 0.13, 0.09);
+      bipe(1320, 0.2, 'sine', 0.08, 0.18);
+    },
+    erro() {
+      bipe(190, 0.16, 'sawtooth', 0.09, 0);
+      bipe(140, 0.22, 'sawtooth', 0.08, 0.1);
+    },
+    nivel() {
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+        bipe(f, 0.24, 'triangle', 0.11, i * 0.11);
+      });
+    },
+    vitoria() {
+      [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98].forEach((f, i) => {
+        bipe(f, 0.3, 'triangle', 0.12, i * 0.13);
+      });
+      bipe(1046.5, 0.9, 'sine', 0.1, 0.95);
+    }
+  };
+
+  /* =======================================================================
+     4. PERSISTÊNCIA — localStorage
+     ======================================================================= */
+  const LS_CHAVE = 'jogoMuscularProgresso_v1';
+  const PROGRESSO_PADRAO = { nivelAlcancado: 0, melhorPontuacao: 0, melhorTempo: null, concluido: false };
+
+  function carregarProgresso() {
+    try {
+      const bruto = localStorage.getItem(LS_CHAVE);
+      if (!bruto) return Object.assign({}, PROGRESSO_PADRAO);
+      const obj = JSON.parse(bruto);
+      return Object.assign({}, PROGRESSO_PADRAO, obj || {});
+    } catch (e) {
+      return Object.assign({}, PROGRESSO_PADRAO);
+    }
+  }
+
+  function salvarProgresso(prog) {
+    try {
+      localStorage.setItem(LS_CHAVE, JSON.stringify(prog));
+    } catch (e) {
+      /* localStorage indisponível — ignora silenciosamente */
+    }
+  }
+
+  /* =======================================================================
+     5. UTILIDADES
+     ======================================================================= */
+  const $id = (id) => document.getElementById(id);
+
+  /** Formata segundos em MM:SS */
+  function formatarTempo(segundos) {
+    const s = Math.max(0, Math.floor(segundos));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
+  }
+
+  /** Embaralhamento Fisher-Yates (retorna novo array) */
+  function embaralhar(array) {
+    const copia = array.slice();
+    for (let i = copia.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copia[i], copia[j]] = [copia[j], copia[i]];
+    }
+    return copia;
+  }
+
+  /** Calcula o número de colunas do grid conforme a quantidade de cartas e a tela */
+  function calcularColunas(qtdCartas) {
+    const w = window.innerWidth;
+
+    // Telas muito pequenas
+    if (w <= 430) {
+      return qtdCartas <= 12 ? 3 : 4;
+    }
+    // Tablets / celulares grandes
+    if (w <= 760) {
+      return qtdCartas <= 12 ? 4 : 4;
+    }
+    // Desktop
+    if (qtdCartas <= 16) return 4;
+    if (qtdCartas <= 20) return 5;
+    return 6;
+  }
+
+  /** Destaca visualmente um bloco de estatística */
+  function destacarStat(elemento) {
+    if (!elemento) return;
+    elemento.classList.remove('destaque');
+    // força reinício da animação
+    void elemento.offsetWidth;
+    elemento.classList.add('destaque');
+    setTimeout(() => elemento.classList.remove('destaque'), 600);
+  }
+
+  /* =======================================================================
+     6. RENDERIZAÇÃO
+     ======================================================================= */
+
+  /** Monta o baralho (ação + músculo) do nível informado */
+  function montarBaralho(indiceNivel) {
+    const pares = LEVELS[indiceNivel].pares;
+    const cartas = [];
+
+    pares.forEach(function (par, i) {
+      cartas.push({
+        pairId: i,
+        tipo: 'acao',
+        texto: par.acao,
+        emoji: par.emoji
+      });
+      cartas.push({
+        pairId: i,
+        tipo: 'musculo',
+        texto: par.musculo,
+        emoji: '💪'
+      });
+    });
+
+    return embaralhar(cartas);
+  }
+
+  /** Desenha o grid de cartas */
+  function renderizarGrid() {
+    el.grid.innerHTML = '';
+    el.grid.style.setProperty('--cols', calcularColunas(estado.baralho.length));
+
+    const fragmento = document.createDocumentFragment();
+
+    estado.baralho.forEach(function (carta, indice) {
+      const botao = document.createElement('button');
+      botao.type = 'button';
+      botao.className = 'card';
+      botao.dataset.index = String(indice);
+      botao.dataset.pairId = String(carta.pairId);
+      botao.dataset.tipo = carta.tipo;
+      botao.setAttribute('aria-label', 'Carta virada para baixo. Toque para revelar.');
+      botao.style.animationDelay = (indice * 28) + 'ms';
+
+      const rotuloTipo = carta.tipo === 'acao' ? 'Ação muscular' : 'Músculo';
+
+      const inner = document.createElement('div');
+      inner.className = 'card-inner';
+
+      // Verso
+      const verso = document.createElement('div');
+      verso.className = 'face verso';
+      verso.innerHTML = '<span class="verso-icone" aria-hidden="true">💪</span>' +
+                        '<span class="verso-letra" aria-hidden="true">Músculo</span>';
+
+      // Frente
+      const frente = document.createElement('div');
+      frente.className = 'face frente ' + carta.tipo;
+
+      const spanTipo = document.createElement('span');
+      spanTipo.className = 'frente-tipo';
+      spanTipo.textContent = rotuloTipo;
+
+      const spanEmoji = document.createElement('span');
+      spanEmoji.className = 'frente-emoji';
+      spanEmoji.setAttribute('aria-hidden', 'true');
+      spanEmoji.textContent = carta.emoji;
+
+      const spanTexto = document.createElement('span');
+      spanTexto.className = 'frente-texto';
+      spanTexto.textContent = carta.texto;
+
+      frente.appendChild(spanTipo);
+      frente.appendChild(spanEmoji);
+      frente.appendChild(spanTexto);
+
+      inner.appendChild(verso);
+      inner.appendChild(frente);
+      botao.appendChild(inner);
+
+      botao.addEventListener('click', function () { virarCarta(botao); });
+
+      fragmento.appendChild(botao);
+    });
+
+    el.grid.appendChild(fragmento);
+  }
+
+  /** Atualiza HUD, barra de progresso e textos */
+  function atualizarHUD() {
+    const cfg = LEVELS[estado.nivel];
+    const totalPares = cfg.pares.length;
+    const pct = totalPares > 0 ? (estado.pares / totalPares) * 100 : 0;
+
+    el.hudNivel.textContent = 'Nível ' + (estado.nivel + 1) + ' • ' + cfg.nome;
+    el.hudTentativas.textContent = String(estado.tentativas);
+    el.hudPares.textContent = estado.pares + '/' + totalPares;
+    el.hudTempo.textContent = formatarTempo(estado.tempoNivel);
+    el.hudPontos.textContent = String(estado.pontos);
+
+    el.barraFill.style.width = pct.toFixed(1) + '%';
+    el.barraTexto.textContent = Math.round(pct) + '%';
+    el.barra.setAttribute('aria-valuenow', String(Math.round(pct)));
+  }
+
+  /* =======================================================================
+     7. LÓGICA DO JOGO
+     ======================================================================= */
+
+  /** Vira uma carta (clique do jogador) */
+  function virarCarta(elemento) {
+    if (estado.bloqueado || estado.emRevisao) return;
+    if (elemento.classList.contains('flipped') || elemento.classList.contains('matched')) return;
+
+    elemento.classList.add('flipped');
+    som.clique();
+
+    const dados = estado.baralho[Number(elemento.dataset.index)];
+    elemento.setAttribute('aria-label', 'Carta revelada: ' + dados.texto);
+
+    if (!estado.primeira) {
+      estado.primeira = elemento;
+      return;
+    }
+
+    estado.segunda = elemento;
+    estado.bloqueado = true;
+    estado.tentativas++;
+    estado.jogadasTotais++;
+
+    verificarPar();
+  }
+
+  /** Verifica se as duas cartas viradas formam um par correto */
+  function verificarPar() {
+    const a = estado.primeira;
+    const b = estado.segunda;
+
+    const mesmoPar = a.dataset.pairId === b.dataset.pairId;
+    const tiposDiferentes = a.dataset.tipo !== b.dataset.tipo;
+    const correto = mesmoPar && tiposDiferentes;
+
+    if (correto) {
+      /* ------------------------- ACERTO ------------------------- */
+      setTimeout(function () {
+        a.classList.add('matched');
+        b.classList.add('matched');
+        a.setAttribute('aria-label', 'Par correto encontrado.');
+        b.setAttribute('aria-label', 'Par correto encontrado.');
+
+        som.acerto();
+
+        estado.pares++;
+        estado.acertosTotais++;
+        estado.pontos += 100;
+
+        limparTurno();
+        atualizarHUD();
+        destacarStat(el.statPontos);
+
+        // Nível concluído?
+        if (estado.pares === LEVELS[estado.nivel].pares.length) {
+          concluirNivel();
+        }
+      }, 420);
+
+    } else {
+      /* ------------------------- ERRO ------------------------- */
+      a.classList.add('errada');
+      b.classList.add('errada');
+      som.erro();
+
+      setTimeout(function () {
+        a.classList.remove('flipped', 'errada');
+        b.classList.remove('flipped', 'errada');
+        a.setAttribute('aria-label', 'Carta virada para baixo. Toque para revelar.');
+        b.setAttribute('aria-label', 'Carta virada para baixo. Toque para revelar.');
+
+        estado.pontos = Math.max(0, estado.pontos - 10);
+
+        limparTurno();
+        atualizarHUD();
+      }, 1000);
+    }
+  }
+
+  /** Limpa as referências do turno e libera os cliques */
+  function limparTurno() {
+    estado.primeira = null;
+    estado.segunda = null;
+    estado.bloqueado = false;
+  }
+
+  /* ------------------------------ CRONÔMETRO ------------------------------ */
+  function iniciarTimer() {
+    pararTimer();
+    estado.timerId = setInterval(function () {
+      estado.tempoNivel++;
+      estado.tempoTotal++;
+      el.hudTempo.textContent = formatarTempo(estado.tempoNivel);
+    }, 1000);
+  }
+
+  function pararTimer() {
+    if (estado.timerId) {
+      clearInterval(estado.timerId);
+      estado.timerId = null;
+    }
+  }
+
+  /* =======================================================================
+     8. NAVEGAÇÃO / FLUXO DE NÍVEIS
+     ======================================================================= */
+
+  /** Mostra somente a tela indicada */
+  function mostrarTela(nome) {
+    Object.keys(el.telas).forEach(function (chave) {
+      el.telas[chave].classList.toggle('active', chave === nome);
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /**
+   * Inicia um nível.
+   * @param {number} indice  índice do nível (0..3)
+   * @param {object} opcoes  { reiniciar:boolean, revisao:boolean }
+   */
+  function iniciarNivel(indice, opcoes) {
+    opcoes = opcoes || {};
+
+    // Ao reiniciar o mesmo nível, devolve a pontuação ao estado inicial do nível
+    if (opcoes.reiniciar) {
+      estado.pontos = estado.pontosBaseNivel;
+    }
+
+    estado.nivel = indice;
+    estado.pontosBaseNivel = estado.pontos;
+
+    // Reset de estado do nível
+    estado.primeira = null;
+    estado.segunda = null;
+    estado.bloqueado = false;
+    estado.emRevisao = false;
+    estado.tentativas = 0;
+    estado.pares = 0;
+    estado.tempoNivel = 0;
+
+    // Monta e desenha
+    estado.baralho = montarBaralho(indice);
+    renderizarGrid();
+    atualizarHUD();
+    mostrarTela('jogo');
+
+    pararTimer();
+
+    if (opcoes.revisao) {
+      iniciarRevisao(function () { iniciarTimer(); });
+    } else {
+      iniciarTimer();
+    }
+  }
+
+  /** Modo revisão: mostra todos os pares por 3 segundos */
+  function iniciarRevisao(aoTerminar) {
+    estado.emRevisao = true;
+    estado.bloqueado = true;
+
+    const cartas = el.grid.querySelectorAll('.card');
+    cartas.forEach(function (c) { c.classList.add('flipped'); });
+
+    let restante = 3;
+    el.revisaoContagem.textContent = String(restante);
+    el.bannerRevisao.classList.add('show');
+
+    // Encerra a revisão
+    function finalizar() {
+      el.bannerRevisao.classList.remove('show');
+      cartas.forEach(function (c) { c.classList.remove('flipped'); });
+      estado.emRevisao = false;
+      estado.bloqueado = false;
+      if (typeof aoTerminar === 'function') aoTerminar();
+    }
+
+    const intervalo = setInterval(function () {
+      restante--;
+      if (restante > 0) {
+        el.revisaoContagem.textContent = String(restante);
+      } else {
+        clearInterval(intervalo);
+        finalizar();
+      }
+    }, 1000);
+  }
+
+  /** Fecha o overlay de nível concluído */
+  function fecharOverlayNivel() {
+    if (intervaloOverlay) {
+      clearInterval(intervaloOverlay);
+      intervaloOverlay = null;
+    }
+    el.overlayNivel.classList.add('oculto');
+  }
+
+  /** Chamado quando todos os pares do nível foram encontrados */
+  function concluirNivel() {
+    estado.bloqueado = true;
+    pararTimer();
+    som.nivel();
+
+    const cfg = LEVELS[estado.nivel];
+
+    // Bônus de tempo: +50 por cada 10s abaixo do limite do nível
+    const sobra = cfg.limite - estado.tempoNivel;
+    const bonus = sobra > 0 ? Math.floor(sobra / 10) * 50 : 0;
+    estado.pontos += bonus;
+    atualizarHUD();
+
+    const ultimoNivel = estado.nivel === LEVELS.length - 1;
+
+    // Preenche o overlay
+    el.ovNome.textContent = 'Nível ' + (estado.nivel + 1) + ' • ' + cfg.nome;
+    el.ovTempo.textContent = formatarTempo(estado.tempoNivel);
+    el.ovTentativas.textContent = String(estado.tentativas);
+    el.ovBonus.textContent = '+' + bonus;
+    el.ovPontos.textContent = String(estado.pontos);
+
+    el.btnProximo.textContent = ultimoNivel ? 'Ver Resultado Final 🏆' : 'Próximo Nível ➡️';
+    el.ovContagem.textContent = '';
+
+    el.overlayNivel.classList.remove('oculto');
+
+    // Ação do botão "próximo"
+    el.btnProximo.onclick = function () {
+      fecharOverlayNivel();
+      if (ultimoNivel) {
+        finalizarJogo();
+      } else {
+        iniciarNivel(estado.nivel + 1, {});
+      }
+    };
+
+    // Avanço automático (apenas se não for o último nível)
+    if (!ultimoNivel) {
+      let restante = 5;
+      el.ovContagem.textContent = 'Avançando automaticamente em ' + restante + 's...';
+      intervaloOverlay = setInterval(function () {
+        restante--;
+        if (restante <= 0) {
+          clearInterval(intervaloOverlay);
+          intervaloOverlay = null;
+          el.btnProximo.click();
+        } else {
+          el.ovContagem.textContent = 'Avançando automaticamente em ' + restante + 's...';
+        }
+      }, 1000);
+    }
+  }
+
+  /** Finaliza o jogo (todos os níveis concluídos) */
+  function finalizarJogo() {
+    pararTimer();
+    estado.bloqueado = true;
+
+    const tentativas = estado.jogadasTotais;
+    const acertos = estado.acertosTotais;
+    const pctAcertos = tentativas > 0 ? Math.round((acertos / tentativas) * 100) : 0;
+
+    $id('fim-tempo').textContent = formatarTempo(estado.tempoTotal);
+    $id('fim-jogadas').textContent = String(tentativas);
+    $id('fim-pontos').textContent = String(estado.pontos);
+    $id('fim-acertos').textContent = pctAcertos + '%';
+
+    // ---- Persistência de recordes ----
+    const prog = carregarProgresso();
+    let novoRecorde = false;
+
+    if (estado.pontos > prog.melhorPontuacao) {
+      prog.melhorPontuacao = estado.pontos;
+      novoRecorde = true;
+    }
+    if (prog.melhorTempo === null || estado.tempoTotal < prog.melhorTempo) {
+      prog.melhorTempo = estado.tempoTotal;
+      novoRecorde = true;
+    }
+    prog.nivelAlcancado = LEVELS.length;
+    prog.concluido = true;
+    salvarProgresso(prog);
+
+    $id('fim-recorde').classList.toggle('oculto', !novoRecorde);
+
+    mostrarTela('fim');
+    som.vitoria();
+    iniciarConfete();
+    atualizarTelaInicial();
+  }
+
+  /** Volta para a tela inicial (interrompendo o jogo) */
+  function voltarAoInicio() {
+    pararTimer();
+    fecharOverlayNivel();
+    estado.bloqueado = true;
+    estado.emRevisao = false;
+    el.bannerRevisao.classList.remove('show');
+    mostrarTela('inicio');
+    atualizarTelaInicial();
+  }
+
+  /** Reinicia o jogo do zero */
+  function novoJogo() {
+    obterAudio(); // desbloqueia o áudio com o gesto do usuário
+
+    fecharOverlayNivel();
+    pararTimer();
+
+    estado.pontos = 0;
+    estado.pontosBaseNivel = 0;
+    estado.jogadasTotais = 0;
+    estado.acertosTotais = 0;
+    estado.tempoTotal = 0;
+    estado.nivel = 0;
+
+    iniciarNivel(0, {});
+  }
+
+  /** Atualiza as informações da tela inicial (progresso salvo) */
+  function atualizarTelaInicial() {
+    const prog = carregarProgresso();
+    const partes = [];
+
+    if (prog.concluido) {
+      partes.push('🏆 Você já concluiu o jogo!');
+    }
+    if (prog.melhorPontuacao > 0) {
+      partes.push('⭐ Melhor pontuação: <b>' + prog.melhorPontuacao + '</b>');
+    }
+    if (prog.melhorTempo !== null && prog.melhorTempo !== undefined) {
+      partes.push('⏱️ Melhor tempo: <b>' + formatarTempo(prog.melhorTempo) + '</b>');
+    }
+
+    if (partes.length === 0) {
+      el.progressoSalvo.innerHTML = '<span style="opacity:.7">Nenhum progresso salvo ainda. Boa sorte!</span>';
+    } else {
+      el.progressoSalvo.innerHTML = partes.join('<br>') +
+        '<br><button type="button" class="link-limpar" id="btn-limpar-progresso">Limpar progresso salvo</button>';
+      const btnLimpar = $id('btn-limpar-progresso');
+      if (btnLimpar) {
+        btnLimpar.addEventListener('click', function () {
+          salvarProgresso(Object.assign({}, PROGRESSO_PADRAO));
+          atualizarTelaInicial();
+        });
+      }
+    }
+
+    // Botão "continuar de onde parei"
+    const nivelSalvo = Math.min(prog.nivelAlcancado || 0, LEVELS.length - 1);
+    if (prog.nivelAlcancado > 0 && prog.nivelAlcancado < LEVELS.length) {
+      el.btnContinuar.classList.remove('oculto');
+      el.btnContinuar.textContent = '⏩ Continuar do Nível ' + (nivelSalvo + 1) + ' (' + LEVELS[nivelSalvo].nome + ')';
+      el.btnContinuar.dataset.nivel = String(nivelSalvo);
+    } else {
+      el.btnContinuar.classList.add('oculto');
+    }
+  }
+
+  /* =======================================================================
+     9. CONFETE (canvas)
+     ======================================================================= */
+  const canvas = $id('confete');
+  const ctxCanvas = canvas.getContext('2d');
+  let particulas = [];
+  let rafId = null;
+  let limiteConfete = 0;
+
+  function redimensionarCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function criarParticulas(qtd) {
+    const cores = ['#7c3aed', '#2563eb', '#06b6d4', '#10b981', '#fbbf24', '#f472b6', '#a78bfa', '#38bdf8'];
+    for (let i = 0; i < qtd; i++) {
+      particulas.push({
+        x: Math.random() * canvas.width,
+        y: -30 - Math.random() * canvas.height * 0.7,
+        vx: (Math.random() - 0.5) * 2.4,
+        vy: 1.6 + Math.random() * 3.4,
+        w: 6 + Math.random() * 8,
+        h: 9 + Math.random() * 11,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.22,
+        cor: cores[Math.floor(Math.random() * cores.length)]
+      });
+    }
+  }
+
+  function animarConfete() {
+    ctxCanvas.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let i = 0; i < particulas.length; i++) {
+      const p = particulas[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.025;
+      p.rot += p.vr;
+
+      ctxCanvas.save();
+      ctxCanvas.translate(p.x, p.y);
+      ctxCanvas.rotate(p.rot);
+      ctxCanvas.fillStyle = p.cor;
+      ctxCanvas.globalAlpha = 0.92;
+      ctxCanvas.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctxCanvas.restore();
+    }
+
+    particulas = particulas.filter(function (p) {
+      return p.y < canvas.height + 60;
+    });
+
+    if (particulas.length > 0 && performance.now() < limiteConfete) {
+      rafId = requestAnimationFrame(animarConfete);
+    } else {
+      ctxCanvas.clearRect(0, 0, canvas.width, canvas.height);
+      particulas = [];
+      rafId = null;
+    }
+  }
+
+  function iniciarConfete() {
+    redimensionarCanvas();
+    particulas = [];
+    criarParticulas(160);
+    limiteConfete = performance.now() + 9000;
+
+    // Segunda leva de partículas
+    setTimeout(function () {
+      if (particulas.length) criarParticulas(90);
+    }, 1400);
+
+    if (rafId === null) {
+      rafId = requestAnimationFrame(animarConfete);
+    }
+  }
+
+  /* =======================================================================
+     10. INICIALIZAÇÃO / EVENTOS
+     ======================================================================= */
+
+  /* ---- Botões da tela inicial ---- */
+  $id('btn-comecar').addEventListener('click', novoJogo);
+
+  el.btnContinuar.addEventListener('click', function () {
+    const nivel = Number(el.btnContinuar.dataset.nivel || 0);
+    obterAudio();
+    fecharOverlayNivel();
+    pararTimer();
+
+    estado.pontos = 0;
+    estado.pontosBaseNivel = 0;
+    estado.jogadasTotais = 0;
+    estado.acertosTotais = 0;
+    estado.tempoTotal = 0;
+
+    iniciarNivel(nivel, {});
+  });
+
+  /* ---- Controles do jogo ---- */
+  $id('btn-reiniciar').addEventListener('click', function () {
+    obterAudio();
+    fecharOverlayNivel();
+    iniciarNivel(estado.nivel, { reiniciar: true });
+  });
+
+  $id('btn-revisao').addEventListener('click', function () {
+    obterAudio();
+    fecharOverlayNivel();
+    iniciarNivel(estado.nivel, { reiniciar: true, revisao: true });
+  });
+
+  $id('btn-inicio').addEventListener('click', voltarAoInicio);
+
+  /* ---- Tela final ---- */
+  $id('btn-jogar-novamente').addEventListener('click', function () {
+    ctxCanvas.clearRect(0, 0, canvas.width, canvas.height);
+    particulas = [];
+    novoJogo();
+  });
+
+  $id('btn-inicio-fim').addEventListener('click', function () {
+    ctxCanvas.clearRect(0, 0, canvas.width, canvas.height);
+    particulas = [];
+    voltarAoInicio();
+  });
+
+  /* ---- Atalhos de teclado ---- */
+  document.addEventListener('keydown', function (ev) {
+    // ESC fecha o overlay ou volta ao início
+    if (ev.key === 'Escape') {
+      if (!el.overlayNivel.classList.contains('oculto')) {
+        fecharOverlayNivel();
+        if (estado.nivel === LEVELS.length - 1) {
+          finalizarJogo();
+        } else {
+          iniciarNivel(estado.nivel + 1, {});
+        }
+      } else if (el.telas.jogo.classList.contains('active')) {
+        voltarAoInicio();
+      }
+    }
+  });
+
+  /* ---- Redimensionamento ---- */
+  window.addEventListener('resize', function () {
+    redimensionarCanvas();
+    if (el.telas.jogo.classList.contains('active')) {
+      el.grid.style.setProperty('--cols', calcularColunas(estado.baralho.length));
+    }
+  });
+
+  /* ---- Desbloqueia o áudio no primeiro toque em qualquer lugar ---- */
+  document.addEventListener('pointerdown', function desbloquear() {
+    obterAudio();
+    document.removeEventListener('pointerdown', desbloquear);
+  }, { once: true });
+
+  /* ---- Inicialização ---- */
+  redimensionarCanvas();
+  atualizarTelaInicial();
+  mostrarTela('inicio');
+
+})();
+</script>
+
+</body>
+</html>
